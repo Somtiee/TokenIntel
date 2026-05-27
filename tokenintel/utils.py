@@ -354,7 +354,14 @@ def report_to_markdown(report: FullResearchReport) -> str:
 
     lines.append("## Social (X/Reddit)")
     if not report.tweets:
-        lines.append("_No recent tweets captured._")
+        lines.append("_No live X/Reddit posts were captured for this run._")
+        summary = clean_prose_for_display(report.sentiment.overall, max_chars=220, mint=report.token_mint)
+        if summary:
+            lines.append(f"- Sentiment model summary: {summary}")
+        if report.sentiment.key_bullish:
+            lines.append("- Bullish cues: " + "; ".join(report.sentiment.key_bullish[:2]))
+        if report.sentiment.key_bearish:
+            lines.append("- Bearish cues: " + "; ".join(report.sentiment.key_bearish[:2]))
     else:
         for t in report.tweets[:20]:
             author = t.author.get("username") or t.author.get("name") or "unknown"
@@ -378,7 +385,17 @@ def report_to_markdown(report: FullResearchReport) -> str:
 
     lines.append("## Analysis Sections")
     if not report.sections:
-        lines.append("_No additional sections._")
+        lines.append("### Executive reasoning")
+        lines.append(display_recommendation(report))
+        lines.append("")
+        if report.sentiment.key_bullish:
+            lines.append("### Bullish Thesis")
+            lines.extend(f"- {b}" for b in report.sentiment.key_bullish[:5])
+            lines.append("")
+        if report.sentiment.key_bearish:
+            lines.append("### Bearish Thesis")
+            lines.extend(f"- {b}" for b in report.sentiment.key_bearish[:5])
+            lines.append("")
     else:
         for section in report.sections:
             lines.extend(_section_to_markdown(section))
