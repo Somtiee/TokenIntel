@@ -24,7 +24,8 @@ Vercel does **not** run Streamlit apps as serverless functions ([Streamlit commu
 2. Go to [share.streamlit.io](https://share.streamlit.io) → **Create app**.
 3. Connect **Somtiee/TokenIntel**, branch `main`.
 4. Set **Main file path**: `main.py` (repo root).
-5. **Advanced settings** → **Secrets** — paste (empty values; fill in the dashboard only):
+5. **Advanced settings** → **Python version**: `3.11` (repo includes `.python-version`). Using 3.12+ can force `pandas` to compile from source and hang for 30+ minutes on `Preparing metadata (pyproject.toml)`.
+6. **Advanced settings** → **Secrets** — paste (empty values; fill in the dashboard only):
 
 ```toml
 OPENAI_API_KEY = ""
@@ -37,7 +38,9 @@ TINTEL_LLM_MODEL = "gpt-4o"
 TINTEL_LOG_LEVEL = "INFO"
 ```
 
-6. Deploy. Your app will be at `https://<app-name>.streamlit.app`.
+7. Deploy. Your app will be at `https://<app-name>.streamlit.app`.
+
+If a build is stuck on `Preparing metadata (pyproject.toml)` for more than ~15 minutes: **Reboot app** after pulling latest `main` (uses prebuilt wheels for pandas/numpy).
 
 ---
 
