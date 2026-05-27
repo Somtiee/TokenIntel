@@ -307,7 +307,7 @@ def report_to_markdown(report: FullResearchReport) -> str:
         "1. [Executive Recommendation](#executive-recommendation)",
         "2. [On-Chain Snapshot](#on-chain-snapshot)",
         "3. [Sentiment Summary](#sentiment-summary)",
-        "4. [Social (X)](#social-x)",
+        "4. [Social (X/Reddit)](#social-xreddit)",
         "5. [News](#news)",
         "6. [Analysis Sections](#analysis-sections)",
         "7. [Sources](#sources)",
@@ -352,7 +352,7 @@ def report_to_markdown(report: FullResearchReport) -> str:
         lines.extend(f"- {b}" for b in report.sentiment.key_bearish)
         lines.append("")
 
-    lines.append("## Social (X)")
+    lines.append("## Social (X/Reddit)")
     if not report.tweets:
         lines.append("_No recent tweets captured._")
     else:
@@ -1071,6 +1071,17 @@ def report_to_share_card(report: FullResearchReport) -> bytes:
         draw.line([(0, y), (w, y)], fill=(r, g, b))
 
     def _font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+        # Try common font-family names first (works on many Linux builds without absolute paths).
+        names = (
+            ["DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf", "Arial Bold.ttf"]
+            if bold
+            else ["DejaVuSans.ttf", "LiberationSans-Regular.ttf", "Arial.ttf"]
+        )
+        for name in names:
+            try:
+                return ImageFont.truetype(name, size)
+            except Exception:
+                pass
         candidates: list[Path] = []
         if bold:
             candidates.extend(
