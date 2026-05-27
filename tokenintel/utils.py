@@ -1352,6 +1352,8 @@ def enrich_report_from_tools(
                 sample_tweets=texts[:5],
                 source=",".join(data.get("sources", ["social"])),
             )
+            # Keep raw social posts so UI can render Reddit snippets when X has no tweets.
+            report.metadata["social_posts"] = posts[:20]
         except (json.JSONDecodeError, TypeError, ValueError):
             logger.warning("Could not parse social_json for enrichment")
     if news_json:

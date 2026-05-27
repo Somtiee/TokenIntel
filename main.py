@@ -13,7 +13,6 @@ import sys
 import tempfile
 import urllib.parse
 from datetime import datetime, timezone
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -470,18 +469,24 @@ def _research_to_full_report(rr: ResearchReport, raw_output: str | None = None) 
             )
 
     tweets: list[TweetData] = []
+    social_texts: list[str] = []
     if rr.social and rr.social.sample_tweets:
-        for text in rr.social.sample_tweets[:10]:
-            tweets.append(
-                TweetData(
-                    text=text,
-                    created_at=ts,
-                    likes=0,
-                    retweets=0,
-                    author={"username": "social", "name": rr.social.source or "reddit"},
-                    url=f"https://www.reddit.com/search/?q={urllib.parse.quote(sym)}",
-                )
+        social_texts = [t for t in rr.social.sample_tweets if t]
+    elif isinstance(rr.metadata.get("social_posts"), list):
+        for post in rr.metadata.get("social_posts", []):
+            if isinstance(post, dict) and post.get("text"):
+                social_texts.append(str(post.get("text", "")))
+    for text in social_texts[:10]:
+        tweets.append(
+            TweetData(
+                text=text,
+                created_at=ts,
+                likes=0,
+                retweets=0,
+                author={"username": "social", "name": (rr.social.source if rr.social else "reddit")},
+                url=f"https://www.reddit.com/search/?q={urllib.parse.quote(sym)}",
             )
+        )
 
     sections = [
         ReportSection(
@@ -564,6 +569,17 @@ def _share_on_x(full: FullResearchReport) -> None:
     snippet = share_snippet_for_x(full)
     url = "https://twitter.com/intent/tweet?" + urllib.parse.urlencode({"text": snippet})
     st.link_button("Post text on X (attach JPEG below)", url, use_container_width=True)
+
+
+def _card_preview_html(card_bytes: bytes) -> str:
+    b64 = base64.b64encode(card_bytes).decode("ascii")
+    return (
+        '<div style="margin:0.5rem 0 1rem 0;">'
+        f'<img src="data:image/jpeg;base64,{b64}" '
+        'style="width:100%;height:auto;border-radius:12px;border:1px solid rgba(148,163,184,0.25);" '
+        'alt="Share card preview" />'
+        "</div>"
+    )
 
 
 def _fmt_share_price(full: FullResearchReport) -> str:
@@ -774,27 +790,11 @@ def _render_results() -> None:
         st.markdown(md)
         card_bytes: bytes | None = st.session_state.get("last_share_card")
         if card_bytes:
-            rendered = False
             try:
-                st.image(card_bytes, caption="Share card preview", use_container_width=True)
-                rendered = True
-            except Exception:
-                pass
-            if not rendered:
-                try:
-                    st.image(BytesIO(card_bytes), caption="Share card preview", use_container_width=True)
-                    rendered = True
-                except Exception:
-                    pass
-            if not rendered:
-                try:
-                    from PIL import Image
-
-                    st.image(Image.open(BytesIO(card_bytes)), caption="Share card preview", use_container_width=True)
-                    rendered = True
-                except Exception as exc:
-                    logger.warning("Share card preview render failed: {}", exc)
-                    st.caption("Share card preview unavailable in this environment.")
+                st.markdown(_card_preview_html(card_bytes), unsafe_allow_html=True)
+            except Exception as exc:
+                logger.warning("Share card preview render failed: {}", exc)
+                st.caption("Share card preview unavailable in this environment.")
         st.divider()
         col_a, col_b, col_c = st.columns(3)
         with col_a:
