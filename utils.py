@@ -681,6 +681,15 @@ _AGENT_MARKERS: tuple[str, ...] = (
 )
 
 _MINT_RE = re.compile(r"\b[1-9A-HJ-NP-Za-km-z]{32,44}\b")
+_SCHEMA_MARKERS = (
+    "default:",
+    "description:",
+    "required:",
+    "properties:",
+    "anyof",
+    "max_result",
+    "max_results",
+)
 
 
 def _short_mint(mint: str) -> str:
@@ -710,6 +719,9 @@ def is_readable_prose(text: str, *, min_len: int = 60) -> bool:
         return False
     lower = s.lower()
     if any(marker.lower() in lower for marker in _AGENT_MARKERS):
+        return False
+    marker_hits = sum(1 for marker in _SCHEMA_MARKERS if marker in lower)
+    if marker_hits >= 2:
         return False
     if re.search(r"\[\s*\{", s) or re.search(r"\{\s*['\"]role['\"]", s):
         return False
@@ -744,6 +756,9 @@ def sanitize_prose(text: str, *, mint: str | None = None) -> str:
         if re.match(r"^TokenIntel-\w+\s*:", stripped):
             continue
         if "'type'" in stripped and "function" in stripped:
+            continue
+        low = stripped.lower()
+        if sum(1 for marker in _SCHEMA_MARKERS if marker in low) >= 2:
             continue
         lines.append(stripped)
     out = " ".join(lines)
@@ -1082,6 +1097,13 @@ def report_to_share_card(report: FullResearchReport) -> bytes:
                 return ImageFont.truetype(name, size)
             except Exception:
                 pass
+        try:
+            pil_fonts = Path(ImageFont.__file__).resolve().parent / "Fonts"
+            bundled = pil_fonts / ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf")
+            if bundled.exists():
+                return ImageFont.truetype(str(bundled), size)
+        except Exception:
+            pass
         candidates: list[Path] = []
         if bold:
             candidates.extend(
@@ -1281,9 +1303,14 @@ def compute_sentiment_score(
         return -0.35
 
     if price_change_24h is not None:
-        return max(-1.0, min(1.0, float(price_change_24h) / 20.0))
+        score = max(-1.0, min(1.0, float(price_change_24h) / 20.0))
+    else:
+        score = 0.0
 
-    return 0.0
+    # Avoid displaying noisy "-0.00" / "+0.00" due float precision.
+    if abs(score) < 0.015:
+        return 0.0
+    return score
 
 
 def enrich_report_from_tools(
