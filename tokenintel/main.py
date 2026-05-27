@@ -611,6 +611,11 @@ def _render_sidebar() -> None:
                 [d.value for d in ResearchDepth],
                 index=[d.value for d in ResearchDepth].index(st.session_state.depth),
             )
+            st.session_state.llm_model = st.text_input(
+                "LLM model",
+                value=st.session_state.llm_model,
+                help="Use a model your API key can access (e.g. gpt-4o-mini).",
+            )
             st.session_state.include_onchain = st.checkbox(
                 "On-chain data", value=st.session_state.include_onchain
             )
@@ -700,7 +705,17 @@ def _run_pipeline(query: str) -> None:
         progress.progress(85, text="Formatting report…")
 
         if not result.success or result.report is None:
-            st.error(result.error_message or "Research workflow failed. Check logs and API keys.")
+            err_msg = result.error_message or "Research workflow failed. Check logs and API keys."
+            lower = err_msg.lower()
+            if any(
+                k in lower
+                for k in ["model", "not found", "invalid_request_error", "insufficient_quota", "permission"]
+            ):
+                err_msg += (
+                    "\n\nTip: your key may not have access to the selected model. "
+                    "Open sidebar -> Research options -> set LLM model to `gpt-4o-mini`, then retry."
+                )
+            st.error(err_msg)
             progress.empty()
             status.empty()
             return

@@ -163,9 +163,16 @@ def run_research(request: ResearchRequest, settings: Settings | None = None) -> 
         raw_text = raw if isinstance(raw, str) else json.dumps(raw, default=str)
     except Exception as exc:
         logger.exception("Workflow failed")
+        msg = str(exc)
+        low = msg.lower()
+        if any(k in low for k in ["model", "not found", "invalid_request_error", "insufficient_quota", "permission"]):
+            msg = (
+                f"{msg}\nSet TINTEL_LLM_MODEL to a model available on your key "
+                "(example: gpt-4o-mini)."
+            )
         return WorkflowResult(
             success=False,
-            error_message=str(exc),
+            error_message=msg,
             elapsed_seconds=time.perf_counter() - start,
         )
 
