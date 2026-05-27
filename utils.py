@@ -1229,7 +1229,11 @@ def compute_sentiment_score(
 ) -> float:
     """Derive sentiment in [-1, 1] from social data, markdown, or price momentum."""
     if social and social.sentiment_score is not None:
-        return max(-1.0, min(1.0, float(social.sentiment_score)))
+        score = max(-1.0, min(1.0, float(social.sentiment_score)))
+        mentions = int(getattr(social, "mention_count", 0) or 0)
+        # Avoid hard-locking to 0.00 when there are too few social samples.
+        if not (abs(score) < 0.01 and mentions < 3):
+            return score
 
     if social_json:
         try:
