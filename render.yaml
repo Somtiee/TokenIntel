@@ -1,0 +1,18 @@
+# Render.com — recommended for hosting the Streamlit UI (git-push deploy, similar to Vercel workflow)
+# https://render.com/docs/deploy-streamlit
+
+services:
+  - type: web
+    name: tokenintel
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: >-
+      streamlit run main.py
+      --server.port=$PORT
+      --server.address=0.0.0.0
+      --server.headless=true
+      --browser.gatherUsageStats=false
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"

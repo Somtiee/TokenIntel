@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "public": true,
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://REPLACE_WITH_YOUR_STREAMLIT_OR_RENDER_URL",
+      "permanent": false
+    }
+  ]
+}

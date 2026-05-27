@@ -1,0 +1,18 @@
+# TokenIntel ($TINTEL) — production pins (Python 3.11+)
+swarms==0.12.2
+streamlit==1.39.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+loguru==0.7.2
+python-dotenv==1.0.1
+requests==2.32.3
+tweepy==4.14.0
+pandas==2.2.3
+plotly==5.24.1
+kaleido==0.2.1
+weasyprint==62.3
+markdown>=3.7.0
+diskcache==5.6.3
+tenacity==9.0.0
+Pillow>=10.0.0
+feedparser>=6.0.0

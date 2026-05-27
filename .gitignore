@@ -1,0 +1,38 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+tokenintel/.env
+tokenintel/.env.*
+!tokenintel/.env.example
+.streamlit/secrets.toml
+
+# Python
+.venv/
+venv/
+tokenintel/.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Runtime / local artifacts
+.cache/
+dist/
+*.log
+agent_workspace/
+tokenintel/agent_workspace/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build outputs
+*.pdf
+
+# Large unprocessed logo source (processed logo.png is committed)
+assets/logo-source.png
+tokenintel/assets/logo-source.png
