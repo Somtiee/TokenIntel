@@ -1071,13 +1071,26 @@ def report_to_share_card(report: FullResearchReport) -> bytes:
         draw.line([(0, y), (w, y)], fill=(r, g, b))
 
     def _font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-        names = (
-            ["segoeuib.ttf", "arialbd.ttf", "segoeui.ttf", "arial.ttf"]
-            if bold
-            else ["segoeui.ttf", "arial.ttf"]
-        )
-        for name in names:
-            path = Path("C:/Windows/Fonts") / name
+        candidates: list[Path] = []
+        if bold:
+            candidates.extend(
+                [
+                    Path("C:/Windows/Fonts/segoeuib.ttf"),
+                    Path("C:/Windows/Fonts/arialbd.ttf"),
+                    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+                    Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
+                ]
+            )
+        else:
+            candidates.extend(
+                [
+                    Path("C:/Windows/Fonts/segoeui.ttf"),
+                    Path("C:/Windows/Fonts/arial.ttf"),
+                    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+                    Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
+                ]
+            )
+        for path in candidates:
             if path.exists():
                 return ImageFont.truetype(str(path), size)
         return ImageFont.load_default()

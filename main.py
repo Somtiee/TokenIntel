@@ -533,53 +533,6 @@ def _append_history(label: str, full: FullResearchReport, workflow: WorkflowResu
     st.session_state.history = history[:12]
 
 
-def _fmt_history_time(ts: str | None) -> str:
-    if not ts:
-        return "Unknown time"
-    try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone()
-        return dt.strftime("%Y-%m-%d %H:%M")
-    except Exception:
-        return ts
-
-
-def _render_recent_searches_panel() -> None:
-    history: list[dict[str, Any]] = st.session_state.get("history", [])
-    if not history:
-        return
-
-    st.markdown("### Recent Searches")
-    page_size = 5
-    total = len(history)
-    pages = max(1, (total + page_size - 1) // page_size)
-    page = int(st.session_state.get("history_page", 0))
-    page = max(0, min(page, pages - 1))
-    st.session_state.history_page = page
-
-    start = page * page_size
-    end = min(total, start + page_size)
-    for i in range(start, end):
-        item = history[i]
-        label = item.get("label", item.get("symbol", "Report"))
-        when = _fmt_history_time(item.get("timestamp"))
-        btn_label = f"{when} · {label}"
-        if st.button(btn_label, key=f"recent_main_{i}", use_container_width=True):
-            st.session_state.last_full_report = FullResearchReport.model_validate(item["report"])
-            st.session_state.query_input = f"${item.get('symbol')}" if item.get("symbol") else item.get("mint", "")
-
-    c_prev, c_info, c_next = st.columns([1, 2, 1])
-    with c_prev:
-        if st.button("Prev", key="history_prev", use_container_width=True, disabled=page <= 0):
-            st.session_state.history_page = max(0, page - 1)
-            st.rerun()
-    with c_info:
-        st.caption(f"Page {page + 1} / {pages}")
-    with c_next:
-        if st.button("Next", key="history_next", use_container_width=True, disabled=page >= pages - 1):
-            st.session_state.history_page = min(pages - 1, page + 1)
-            st.rerun()
-
-
 def _clipboard_button(text: str, label: str = "Copy to Clipboard") -> None:
     escaped = json.dumps(text)
     st.components.v1.html(
@@ -627,7 +580,7 @@ def _render_sidebar() -> None:
         logo_uri = _logo_data_uri()
         if logo_uri:
             st.markdown(
-                f'<div class="tintel-sidebar-brand"><img src="{logo_uri}" alt="TokenIntel logo" /></div>',
+                f'<a href="/" target="_self"><div class="tintel-sidebar-brand"><img src="{logo_uri}" alt="TokenIntel logo" /></div></a>',
                 unsafe_allow_html=True,
             )
         st.markdown('<p class="tintel-sidebar-title">TokenIntel</p>', unsafe_allow_html=True)
@@ -688,7 +641,7 @@ def _render_sidebar() -> None:
 def _render_hero() -> None:
     logo_uri = _logo_data_uri()
     logo_html = (
-        f'<img class="tintel-hero-logo" src="{logo_uri}" alt="TokenIntel logo" />'
+        f'<a href="/" target="_self"><img class="tintel-hero-logo" src="{logo_uri}" alt="TokenIntel logo" /></a>'
         if logo_uri
         else ""
     )
@@ -942,7 +895,6 @@ with btn_col:
 if generate:
     _run_pipeline(query)
 
-_render_recent_searches_panel()
 _render_results()
 
 st.markdown(
