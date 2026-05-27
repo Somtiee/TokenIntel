@@ -68,32 +68,21 @@ st.set_page_config(
     page_title="TokenIntel $TINTEL",
     page_icon=str(_FAVICON_PATH) if _FAVICON_PATH.is_file() else "🔍",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ---------------------------------------------------------------------------
-# Constants & theme
+# Theme (dark only)
 # ---------------------------------------------------------------------------
 
-THEMES: dict[str, dict[str, str]] = {
-    "dark": {
-        "bg": "#0B1020",
-        "panel": "#121A2B",
-        "text": "#E6EDF7",
-        "muted": "#94A3B8",
-        "accent": "#9945FF",
-        "accent2": "#14F195",
-        "border": "rgba(148,163,184,0.2)",
-    },
-    "light": {
-        "bg": "#F8FAFC",
-        "panel": "#FFFFFF",
-        "text": "#0F172A",
-        "muted": "#64748B",
-        "accent": "#6366F1",
-        "accent2": "#14B8A6",
-        "border": "rgba(15,23,42,0.12)",
-    },
+_THEME = {
+    "bg": "#0B1020",
+    "panel": "#121A2B",
+    "text": "#E6EDF7",
+    "muted": "#94A3B8",
+    "accent": "#9945FF",
+    "accent2": "#14F195",
+    "border": "rgba(148,163,184,0.2)",
 }
 
 
@@ -104,8 +93,8 @@ def _logo_data_uri() -> str | None:
     return f"data:image/png;base64,{encoded}"
 
 
-def _inject_theme_css(theme: str) -> None:
-    t = THEMES.get(theme, THEMES["dark"])
+def _inject_theme_css() -> None:
+    t = _THEME
     st.markdown(
         f"""
         <style>
@@ -127,11 +116,47 @@ def _inject_theme_css(theme: str) -> None:
             margin-bottom: 0.35rem;
         }}
         .tintel-sidebar-brand img {{
-            max-width: 88px;
+            max-width: 72px;
             width: 100%;
             height: auto;
             display: block;
             margin: 0 auto;
+        }}
+        .tintel-sidebar-title {{
+            text-align: center;
+            margin: 0.25rem 0 0.75rem 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: {t["text"]};
+        }}
+        .tintel-sidebar-tag {{
+            text-align: center;
+            color: {t["muted"]};
+            font-size: 0.78rem;
+            margin: -0.35rem 0 0.85rem 0;
+        }}
+        .tintel-sidebar-about {{
+            background: rgba(153,69,255,0.12);
+            border: 1px solid {t["border"]};
+            border-radius: 12px;
+            padding: 0.85rem 0.9rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.84rem;
+            line-height: 1.45;
+            color: #c7d2fe;
+        }}
+        .tintel-sidebar-about strong {{
+            color: {t["accent2"]};
+            display: block;
+            margin-bottom: 0.35rem;
+            font-size: 0.88rem;
+        }}
+        .tintel-sidebar-about ul {{
+            margin: 0.35rem 0 0 1rem;
+            padding: 0;
+        }}
+        .tintel-sidebar-about li {{
+            margin-bottom: 0.3rem;
         }}
         .tintel-hero {{
             display: flex;
@@ -194,12 +219,20 @@ def _inject_theme_css(theme: str) -> None:
             padding: 1rem 0 2rem 0;
         }}
         @media (max-width: 768px) {{
+            [data-testid="stSidebar"] > div {{
+                padding-top: 0.5rem;
+                padding-left: 0.65rem;
+                padding-right: 0.65rem;
+            }}
+            .tintel-sidebar-brand img {{ max-width: 56px; }}
+            .tintel-sidebar-about {{ font-size: 0.8rem; padding: 0.7rem; }}
             .tintel-hero {{
                 flex-direction: column;
                 text-align: center;
                 padding: 1.25rem 1rem;
             }}
             .tintel-hero-logo {{ width: 68px; height: 68px; }}
+            .tintel-pill {{ display: none; }}
             .stTabs [data-baseweb="tab"] {{
                 padding: 8px 12px;
                 font-size: 0.85rem;
@@ -223,7 +256,6 @@ def _inject_theme_css(theme: str) -> None:
 
 def _init_session() -> None:
     defaults: dict[str, Any] = {
-        "theme": "dark",
         "llm_model": "gpt-4o",
         "chain": "solana",
         "depth": "standard",
@@ -550,81 +582,54 @@ def _render_sidebar() -> None:
                 f'<div class="tintel-sidebar-brand"><img src="{logo_uri}" alt="TokenIntel logo" /></div>',
                 unsafe_allow_html=True,
             )
-        else:
-            st.markdown("### 🔍")
-        st.markdown("### TokenIntel")
-        st.caption("$TINTEL · Swarms multi-agent Web3 research")
+        st.markdown('<p class="tintel-sidebar-title">TokenIntel</p>', unsafe_allow_html=True)
+        st.markdown('<p class="tintel-sidebar-tag">$TINTEL · AI token research</p>', unsafe_allow_html=True)
 
-        theme = st.toggle("Light theme", value=st.session_state.theme == "light", key="theme_toggle")
-        st.session_state.theme = "light" if theme else "dark"
-
-        st.divider()
-        st.markdown("**Credentials**")
-        st.caption(
-            "Keys load from your local `.env` file only. They are **never** shown in the UI. "
-            "This app runs on your machine — not a public website — unless you deploy it yourself."
+        st.markdown(
+            """
+            <div class="tintel-sidebar-about">
+              <strong>What this app does</strong>
+              <ul>
+                <li>Research any token by <b>symbol</b> or <b>mint address</b></li>
+                <li>Four AI agents combine market, on-chain, social &amp; news signals</li>
+                <li>Get an executive summary, charts &amp; a shareable report card</li>
+                <li>Built for traders &amp; builders — not financial advice</li>
+              </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        creds = _credential_status()
-        for name, ok in creds.items():
-            st.write(name, "✅ configured" if ok else "— not set")
+        with st.expander("Research options", expanded=False):
+            st.session_state.chain = st.selectbox(
+                "Chain",
+                ["solana", "ethereum", "bsc", "base"],
+                index=["solana", "ethereum", "bsc", "base"].index(st.session_state.chain),
+            )
+            st.session_state.depth = st.selectbox(
+                "Depth",
+                [d.value for d in ResearchDepth],
+                index=[d.value for d in ResearchDepth].index(st.session_state.depth),
+            )
+            st.session_state.include_onchain = st.checkbox(
+                "On-chain data", value=st.session_state.include_onchain
+            )
+            st.session_state.include_social = st.checkbox(
+                "Social & news", value=st.session_state.include_social
+            )
 
-        with st.expander("Override keys (optional, this session)", expanded=False):
-            st.caption("Leave blank to keep using `.env`. Values are not saved to disk.")
-            st.text_input("OpenAI override", type="password", key="ov_openai", placeholder="sk-…")
-            st.text_input("Groq override", type="password", key="ov_groq")
-            st.text_input("Anthropic override", type="password", key="ov_anthropic")
-            st.text_input("Birdeye override", type="password", key="ov_birdeye")
-            st.text_input("Helius override", type="password", key="ov_helius")
-            st.text_input("X Bearer override", type="password", key="ov_x")
-
-        st.session_state.llm_model = st.text_input("LLM model", value=st.session_state.llm_model)
-
-        st.divider()
-        st.markdown("**Run settings**")
-        st.session_state.chain = st.selectbox(
-            "Chain",
-            ["solana", "ethereum", "bsc", "base"],
-            index=["solana", "ethereum", "bsc", "base"].index(st.session_state.chain),
-        )
-        st.session_state.depth = st.selectbox(
-            "Research depth",
-            [d.value for d in ResearchDepth],
-            index=[d.value for d in ResearchDepth].index(st.session_state.depth),
-        )
-        st.session_state.include_onchain = st.checkbox("On-chain analysis", value=st.session_state.include_onchain)
-        st.session_state.include_social = st.checkbox(
-            "Social sentiment (Reddit + optional X)",
-            value=st.session_state.include_social,
-        )
-
-        st.divider()
-        st.markdown("**Ready to run**")
-        st.write("LLM", "✅" if _has_llm_from_session() else "❌ add OPENAI/GROQ/ANTHROPIC to .env")
-        st.write("Symbol lookup", "✅" if creds.get("Birdeye") else "⚠️ limited without Birdeye")
-        if creds.get("X (Bearer)"):
-            x_status = _x_connection_status()
-            if x_status.get("ok") and not x_status.get("no_credits"):
-                st.write("X API", "✅ connected")
-            elif not x_status.get("ok"):
-                st.write("X API", "⚠️ check bearer token in .env")
-            else:
-                st.write("Social/News", "✅ Reddit + RSS")
-        else:
-            st.write("Social/News", "✅ Reddit + RSS")
-            st.caption("Optional: add X_BEARER_TOKEN to .env to include tweets.")
-
-        st.divider()
-        st.markdown("**Recent reports**")
         history: list[dict[str, Any]] = st.session_state.get("history", [])
-        if not history:
-            st.caption("No reports yet this session.")
-        else:
-            for i, item in enumerate(history):
-                label = item.get("label", item.get("symbol", "Report"))
-                if st.button(label, key=f"hist_{i}", use_container_width=True):
-                    st.session_state.last_full_report = FullResearchReport.model_validate(item["report"])
-                    st.session_state.query_input = f"${item.get('symbol')}" if item.get("symbol") else item.get("mint", "")
+        if history:
+            with st.expander("Recent reports", expanded=False):
+                for i, item in enumerate(history):
+                    label = item.get("label", item.get("symbol", "Report"))
+                    if st.button(label, key=f"hist_{i}", use_container_width=True):
+                        st.session_state.last_full_report = FullResearchReport.model_validate(
+                            item["report"]
+                        )
+                        st.session_state.query_input = (
+                            f"${item.get('symbol')}" if item.get("symbol") else item.get("mint", "")
+                        )
 
 
 def _render_hero() -> None:
@@ -639,10 +644,8 @@ def _render_hero() -> None:
         <div class="tintel-hero">
             {logo_html}
             <div class="tintel-hero-body">
-                <span class="tintel-pill">LIVE</span>
-                <span class="tintel-pill">SWARMS SDK</span>
                 <h1>TokenIntel Research Studio</h1>
-                <p>Institutional-grade multi-agent Web3 intelligence — built for speed, clarity, and action.</p>
+                <p>Enter a token, run multi-agent research, and get a clear report in minutes.</p>
             </div>
         </div>
         """,
@@ -840,7 +843,7 @@ def _render_results() -> None:
 # ---------------------------------------------------------------------------
 
 _init_session()
-_inject_theme_css(st.session_state.theme)
+_inject_theme_css()
 _cached_logging(get_settings().tintel_log_level)
 
 _render_sidebar()
