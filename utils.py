@@ -1126,7 +1126,11 @@ def report_to_share_card(report: FullResearchReport) -> bytes:
         for path in candidates:
             if path.exists():
                 return ImageFont.truetype(str(path), size)
-        return ImageFont.load_default()
+        # Pillow 10+ supports scalable default font via size=.
+        try:
+            return ImageFont.load_default(size=size)
+        except TypeError:
+            return ImageFont.load_default()
 
     title_font = _font(52, bold=True)
     sub_font = _font(28)

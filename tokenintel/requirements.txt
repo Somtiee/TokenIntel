@@ -4,6 +4,9 @@
 
 swarms==12.0.0
 streamlit==1.39.0
+rich==13.9.4
+markdown-it-py==2.2.0
+mdurl==0.1.2
 pydantic==2.9.2
 pydantic-settings==2.5.2
 loguru==0.7.2

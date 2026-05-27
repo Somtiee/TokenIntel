@@ -774,11 +774,27 @@ def _render_results() -> None:
         st.markdown(md)
         card_bytes: bytes | None = st.session_state.get("last_share_card")
         if card_bytes:
+            rendered = False
             try:
-                st.image(BytesIO(card_bytes), caption="Share card preview", use_container_width=True)
-            except Exception as exc:
-                logger.warning("Share card preview render failed: {}", exc)
-                st.caption("Share card preview unavailable in this environment.")
+                st.image(card_bytes, caption="Share card preview", use_container_width=True)
+                rendered = True
+            except Exception:
+                pass
+            if not rendered:
+                try:
+                    st.image(BytesIO(card_bytes), caption="Share card preview", use_container_width=True)
+                    rendered = True
+                except Exception:
+                    pass
+            if not rendered:
+                try:
+                    from PIL import Image
+
+                    st.image(Image.open(BytesIO(card_bytes)), caption="Share card preview", use_container_width=True)
+                    rendered = True
+                except Exception as exc:
+                    logger.warning("Share card preview render failed: {}", exc)
+                    st.caption("Share card preview unavailable in this environment.")
         st.divider()
         col_a, col_b, col_c = st.columns(3)
         with col_a:
